@@ -27,6 +27,8 @@
 | 资料型 XMind | 默认输出 `.xmind`,所有解释、事实、数据和来源都作为可见节点,备注数目标为 0。 |
 | 可选 Word 报告 | 用户要求 Word / docx / 完整交付时,基于同一批证据卡生成连续成文的资料报告。 |
 | 自然中文输出 | 禁止“时间口径为”“相关人物包括”“来源类型为”等字段腔,报告和导图都必须转写成自然中文。 |
+| 深搜循环 | 覆盖审计失败时,用 `research_loop.py` 生成带 `research_goal` 的二轮/三轮补搜任务,按缺口核心继续查。 |
+| 模型解释层 | 允许大模型把证据讲清楚、拆层级、写衔接;不允许绕过证据卡生成事实、数据、政策或最新动态。 |
 | 多类型主题适配 | 覆盖企业/机构/品牌、博物馆/文化馆/历史文化、文旅/主题馆/主题空间、其他主题。 |
 | 最新资料硬要求 | 企业、科技、产业、政策、消费等主题必须查近一年、近 90 天;历史文化主题也要查最新研究、出版、保护和数字化动态。 |
 | 纯 Python 标准库 | 脚本不依赖 pip,可直接用 `python3` 运行。 |
@@ -42,11 +44,14 @@ flowchart TD
   E --> F["Step 5 抓取公开来源"]
   F --> G["Step 6 抽取并校验证据卡"]
   G --> H["Step 7 覆盖审计"]
-  H --> I["Step 8 生成自然中文导图大纲"]
-  I --> J["Step 9 大纲审计"]
-  J --> K["Step 10 生成 XMind"]
-  K --> L["Step 11 XMind 审计"]
-  L --> M["可选 Step 12 生成 Word 报告"]
+  H --> N["覆盖不足则生成 research_loop 深搜补搜"]
+  N --> E
+  H --> I["Step 7.5 模型解释层补厚"]
+  I --> J["Step 8 生成自然中文导图大纲"]
+  J --> K["Step 9 大纲审计"]
+  K --> L["Step 10 生成 XMind"]
+  L --> M["Step 11 XMind 审计"]
+  M --> O["可选 Step 12 生成 Word 报告"]
 ```
 
 | 步骤 | 产出 | 说明 |
@@ -59,6 +64,8 @@ flowchart TD
 | Step 5 | 来源文本 | 抓取公开网页文本,不绕过登录、付费或反爬。 |
 | Step 6 | 证据卡 | 把来源拆成可核验事实,记录时间、人物、地点、对象、数据和来源。 |
 | Step 7 | 覆盖审计 | 检查每个必查核心是否有足够证据、来源和事实字段。 |
+| Step 7 返工 | 深搜补搜计划 | 覆盖不足时运行 `research_loop.py`,按 `research_goal` 和 `expected_evidence_fields` 补查。 |
+| Step 7.5 | 模型解释层 | 把已核验证据讲厚、讲顺、讲给小白听;新增事实必须回到搜索和证据卡。 |
 | Step 8 | 导图大纲 | 用 `outline_from_evidence.py` 生成自然中文 Markdown 大纲。 |
 | Step 9 | 大纲审计 | 检查层级、节点数、占位句、字段腔、策展污染等。 |
 | Step 10 | XMind | 用 `md_to_xmind.py` 生成 `.xmind`。 |
@@ -197,6 +204,7 @@ curation-research-skill/
 │   ├── fetch_sources.py              # 抓取公开来源文本
 │   ├── evidence_cards.py             # 证据卡种子与校验
 │   ├── coverage_audit.py             # 覆盖审计
+│   ├── research_loop.py              # 覆盖缺口驱动的深搜补搜任务
 │   ├── outline_from_evidence.py      # 证据卡转自然中文导图大纲
 │   ├── outline_audit.py              # 大纲审计
 │   ├── md_to_xmind.py                # Markdown 大纲转 XMind

@@ -20,6 +20,7 @@
 - `evidence_cards.jsonl`
 - `evidence_cards.py validate` 通过
 - `coverage_audit.py` 通过
+- 如果覆盖审计曾失败,已经运行 `research_loop.py` 并完成补搜返工
 
 没有证据卡,不得按骨架空写。骨架是组织资料的容器,不是生成内容的模板。
 

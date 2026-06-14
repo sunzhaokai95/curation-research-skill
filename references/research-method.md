@@ -15,17 +15,72 @@
 5. 证据卡:从来源中抽取 `evidence_cards.jsonl`。
 6. 证据校验:`evidence_cards.py validate`。
 7. 覆盖审计:`coverage_audit.py`。
-8. 导图大纲:覆盖通过后才写 `调研大纲.md`。
-9. 大纲审计:`outline_audit.py`。
-10. 生成 XMind:`md_to_xmind.py`。
-11. 最终审计:`xmind_audit.py`。
-12. 完整交付模式:报告 Markdown:`report_from_evidence.py`。
-13. 报告审计:`report_audit.py`。
-14. 生成 Word:`report_to_docx.py`。
+8. 深搜循环:`research_loop.py` 根据覆盖缺口生成补搜任务。
+9. 模型解释层:把已核验证据讲清楚,补足概念解释、层级拆分和报告衔接。
+10. 导图大纲:覆盖通过后才写 `调研大纲.md`。
+11. 大纲审计:`outline_audit.py`。
+12. 生成 XMind:`md_to_xmind.py`。
+13. 最终审计:`xmind_audit.py`。
+14. 完整交付模式:报告 Markdown:`report_from_evidence.py`。
+15. 报告审计:`report_audit.py`。
+16. 生成 Word:`report_to_docx.py`。
 
 任何一步失败,都回到上一步补资料,不要用占位句糊过去。
 
 导图大纲优先由 `outline_from_evidence.py` 从证据卡生成。它的目标不是写报告段落,而是把每条事实拆成可见层级:基本事实、时间地点、人物对象、数据、来源和采信边界。导图节点也必须是自然中文,不能把证据卡字段名原样搬进去。
+
+## 深搜循环
+
+覆盖审计失败时,不要凭感觉补几条搜索。必须运行:
+
+```bash
+python3 "<skill>/scripts/research_loop.py" \
+  --plan "01_检索计划/research_plan.json" \
+  --coverage "05_覆盖审计/coverage_audit.json" \
+  --evidence "04_证据卡/evidence_cards.jsonl" \
+  --out "01_检索计划/research_loop.json" \
+  --breadth 4 \
+  --depth 2
+```
+
+这个脚本把 deep-research 式的递进搜索改成可审计的本地流程:
+
+- `breadth` 决定每轮优先处理多少个缺口核心。
+- `depth` 决定补搜几轮,第二轮以后会转向权威来源、细节字段、最新资料和交叉核验。
+- `research_goal` 说明这条查询要补哪项资料,不是泛泛地搜主题。
+- `expected_evidence_fields` 要求搜索后必须抽取时间、人物/组织、地点/场景、对象、数据和来源边界。
+- `visited_urls` 记录已经进入证据卡的 URL,不能把旧来源重复计算成新增覆盖。
+
+深搜循环的正确用法:
+
+1. 先看 `coverage_audit.json` 缺哪些 `required_cores`。
+2. 运行 `research_loop.py` 生成 `research_loop.json`。
+3. 按 `queries` 逐项搜索,优先处理 `research_goal` 指向的缺口。
+4. 新来源进入 `sources.jsonl`,新事实进入 `evidence_cards.jsonl`。
+5. 重新运行证据校验和覆盖审计。
+
+只有覆盖审计通过后,才进入导图大纲。`research_loop.json` 里的查询任务、目标和停搜条件不能直接进入导图。
+
+## 模型解释层
+
+本 skill 允许大模型参与“讲清楚”,但不允许大模型绕过证据体系“补事实”。
+
+可以由模型完成:
+
+- 把证据卡改写成更自然的中文段落。
+- 把一个概念拆成定义、边界、分类、组成、机制、场景、数据、来源和争议。
+- 给小白解释专业名词,例如工具如何工作、术语之间有什么区别、某类行为为什么形成。
+- 把同一来源或多条证据卡合并成有前后关系的说明。
+- 提出可能遗漏的搜索方向、别名、术语、机构名和资料缺口。
+
+不能由模型直接生成:
+
+- 具体年份、时间线节点、人物关系、地点、政策条款。
+- 市场规模、金额、人数、比例、赛事时间、展会时间。
+- 最新动态、监管状态、来源标题、URL。
+- 未经来源支持的历史判断、文化解释和行业结论。
+
+模型提出的新事实要先进入补搜任务或待核实清单。只有搜索到来源、写入证据卡并通过校验的事实,才能进入最终 XMind 或 Word。模型解释层的价值是让材料更厚、更顺、更易懂,不是降低可核验门槛。
 
 ## 资料价值观
 

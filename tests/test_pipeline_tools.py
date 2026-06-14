@@ -223,6 +223,96 @@ class PipelineToolsTest(unittest.TestCase):
             self.assertIn("钓鱼 分类 术语 工具", queries)
             self.assertNotIn("IPO", queries)
 
+    def test_research_loop_generates_followup_queries_from_coverage_gaps(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            plan_path = tmp_path / "plan.json"
+            coverage_path = tmp_path / "coverage.json"
+            evidence_path = tmp_path / "evidence.jsonl"
+            loop_path = tmp_path / "research_loop.json"
+
+            res = self.run_script(
+                "research_plan.py",
+                "--topic", "钓鱼佬文化馆",
+                "--type", "C",
+                "--region", "中国",
+                "--out", str(plan_path),
+                "--date", "2026-06-14",
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            plan = json.loads(plan_path.read_text(encoding="utf-8"))
+            missing_cores = [
+                "主题定义与边界",
+                "历史源流与阶段变化",
+                "分类谱系与子主题系统",
+                "关键对象/工具/材料/作品/文本/影像",
+                "行为流程/入门路径/进阶路径",
+                "人物群体/社群组织/代表人物",
+                "产业消费/平台数据/品牌渠道",
+                "政策安全/生态伦理/行业规范",
+                "最新动态与当前状态",
+            ]
+            coverage = {
+                "topic": "钓鱼佬文化馆",
+                "core_reports": [
+                    {
+                        "core": core,
+                        "passed": False,
+                        "evidence_cards": 0,
+                        "sources": 0,
+                        "evidence_fields": [],
+                    }
+                    for core in missing_cores
+                ],
+            }
+            coverage_path.write_text(json.dumps(coverage, ensure_ascii=False), encoding="utf-8")
+            evidence_path.write_text(
+                json.dumps({
+                    "claim": "已有来源示例,用于测试 visited_urls 去重。",
+                    "core": "主题定义与边界",
+                    "dimension": "主题边界/基础定义",
+                    "time": "2026年",
+                    "people": ["测试"],
+                    "places": ["中国"],
+                    "objects": ["测试对象"],
+                    "data": ["1条"],
+                    "source_title": "测试来源",
+                    "source_url": "https://example.com/used",
+                    "source_type": "web",
+                    "confidence": "单一来源",
+                }, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            res = self.run_script(
+                "research_loop.py",
+                "--plan", str(plan_path),
+                "--coverage", str(coverage_path),
+                "--evidence", str(evidence_path),
+                "--out", str(loop_path),
+                "--breadth", "12",
+                "--depth", "2",
+                "--date", "2026-06-14",
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            data = json.loads(loop_path.read_text(encoding="utf-8"))
+            queries = "\n".join(q["query"] for q in data["queries"])
+            goals = "\n".join(q["research_goal"] for q in data["queries"])
+            self.assertIn("钓鱼佬 是什么 入门", queries)
+            self.assertIn("钓鱼 历史 起源 发展", queries)
+            self.assertIn("钓鱼 分类 术语 工具", queries)
+            self.assertIn("钓鱼 工具 装备 材料", queries)
+            self.assertIn("钓鱼 新手 入门 流程", queries)
+            self.assertIn("钓鱼 协会 俱乐部 赛事", queries)
+            self.assertIn("钓鱼 市场 消费 行业报告", queries)
+            self.assertIn("钓鱼 政策 法规 禁钓 规范", queries)
+            self.assertIn("钓鱼 2026 最新 趋势", queries)
+            self.assertIn("补足「主题定义与边界」", goals)
+            self.assertIn("https://example.com/used", data["visited_urls"])
+            self.assertTrue(all(q["research_goal"] for q in data["queries"]))
+            self.assertTrue(all(q["expected_evidence_fields"] for q in data["queries"]))
+            self.assertNotIn("IPO", queries)
+
     def test_coverage_audit_requires_factual_fields_per_core(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
