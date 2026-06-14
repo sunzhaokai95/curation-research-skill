@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.xmind
+*.docx
+*.zip
+*_调研_*/
+report_audit.json
+outline_audit.json
+xmind_audit.json
+coverage_audit.json
+evidence_cards_validate.json
