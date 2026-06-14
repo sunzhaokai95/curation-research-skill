@@ -136,7 +136,12 @@ class PipelineToolsTest(unittest.TestCase):
             text = outline_path.read_text(encoding="utf-8")
             self.assertIn("主题解读", text)
             self.assertIn("姓名、身份与主题界定", text)
+            self.assertIn("知识解释", text)
+            self.assertIn("证据托底", text)
             self.assertIn("资料性质:公开网页资料", text)
+            self.assertNotIn("事实1", text)
+            self.assertNotIn("基本事实", text)
+            self.assertNotIn("知识点1", text)
             self.assertNotIn("时间口径为", text)
             self.assertNotIn("来源类型为", text)
 
@@ -162,6 +167,55 @@ class PipelineToolsTest(unittest.TestCase):
                 "--warn-short-leaves",
             )
             self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+
+    def test_fetch_sources_marks_government_sources_as_manual_required(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            search_path = tmp_path / "search_results.jsonl"
+            out_path = tmp_path / "sources.jsonl"
+            search_path.write_text(json.dumps({
+                "kind": "search_result",
+                "query": "测试 政府 公告",
+                "dimension_id": "policy_standards",
+                "dimension": "政策/法规/制度/监管/伦理",
+                "title": "政府公开资料测试",
+                "url": "https://www.gov.cn/test/public-page.html",
+                "snippet": "用于测试官方来源人工读取边界。",
+                "date": "2026-06-14",
+            }, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            res = self.run_script(
+                "fetch_sources.py",
+                "--search-results", str(search_path),
+                "--out", str(out_path),
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            rows = [json.loads(line) for line in out_path.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["status"], "manual_required")
+            self.assertIn("不使用爬虫抓取", rows[0]["reason"])
+            self.assertIn("manual_source_note.py", rows[0]["next_step"])
+
+    def test_manual_source_note_records_browser_excerpt_without_network_fetch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_path = Path(tmp) / "sources.jsonl"
+            excerpt = "这是一段人工通过浏览器读取后整理的公开来源摘录,包含足够长度,用于后续抽取证据卡。"
+            res = self.run_script(
+                "manual_source_note.py",
+                "--out", str(out_path),
+                "--url", "https://www.gov.cn/test/public-page.html",
+                "--title", "政府公开资料测试",
+                "--excerpt", excerpt,
+                "--source-type", "government",
+                "--dimension", "政策/法规/制度/监管/伦理",
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            row = json.loads(out_path.read_text(encoding="utf-8").strip())
+            self.assertEqual(row["status"], "ok")
+            self.assertEqual(row["capture_method"], "manual_or_browser")
+            self.assertEqual(row["source_type"], "government")
+            self.assertEqual(row["text"], excerpt)
+            self.assertIn("脚本未抓取该 URL", row["compliance_note"])
 
     def test_evidence_validation_rejects_placeholders_and_thin_cards(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -221,7 +275,32 @@ class PipelineToolsTest(unittest.TestCase):
                 q["query"] for group in data["query_groups"] for q in group["queries"]
             )
             self.assertIn("钓鱼 分类 术语 工具", queries)
+            self.assertIn("钓鱼佬 百度百科", queries)
+            self.assertIn("钓鱼佬 维基百科", queries)
             self.assertNotIn("IPO", queries)
+
+    def test_plan_declares_knowledge_system_and_compliance_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "plan.json"
+            res = self.run_script(
+                "research_plan.py",
+                "--topic", "星空科学馆",
+                "--type", "D",
+                "--region", "中国",
+                "--out", str(out),
+                "--date", "2026-06-14",
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            data = json.loads(out.read_text(encoding="utf-8"))
+            contract = data["research_contract"]
+            self.assertTrue(contract["knowledge_system_first"])
+            self.assertTrue(contract["evidence_calibration"])
+            self.assertTrue(contract["manual_official_sources"])
+            queries = "\n".join(
+                q["query"] for group in data["query_groups"] for q in group["queries"]
+            )
+            self.assertIn("星空 百度百科", queries)
+            self.assertIn("星空 维基百科", queries)
 
     def test_research_loop_generates_followup_queries_from_coverage_gaps(self):
         with tempfile.TemporaryDirectory() as tmp:

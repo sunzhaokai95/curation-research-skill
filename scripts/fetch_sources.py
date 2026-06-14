@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fetch_sources.py - 抓取 search_collect.py 输出的 URL 并抽取基础文本。
+fetch_sources.py - 抓取允许自动访问的普通公开网页并抽取基础文本。
 
-本脚本只做轻量公开网页抓取,不绕过登录墙/付费墙/反爬限制。
+合规边界:
+- 政府、监管、法院、交易所、官方数据库等权威来源默认不抓取。
+- 这些来源会被写成 manual_required 记录,由操作者用浏览器人工读取后,
+  再用 manual_source_note.py 记录摘录。
+- 普通网页也不绕过登录墙、付费墙、反爬或 robots.txt 限制。
 """
 import argparse
 import datetime
@@ -11,12 +15,34 @@ import html
 import json
 import os
 import re
+import urllib.robotparser
 import sys
 import urllib.parse
 import urllib.request
 
 
 USER_AGENT = "curation-research/2.0 (+public research workflow)"
+
+MANUAL_DOMAIN_HINTS = (
+    ".gov.",
+    ".gov/",
+    "gov.cn",
+    "sec.gov",
+    "court.gov",
+    "chinacourt.gov.cn",
+    "sse.com.cn",
+    "szse.cn",
+    "hkexnews.hk",
+    "cninfo.com.cn",
+    "pbc.gov.cn",
+    "csrc.gov.cn",
+    "samr.gov.cn",
+    "stats.gov.cn",
+    "ndrc.gov.cn",
+    "miit.gov.cn",
+    "moa.gov.cn",
+    "npc.gov.cn",
+)
 
 
 def read_jsonl(path):
@@ -29,6 +55,29 @@ def read_jsonl(path):
 
 def domain(url):
     return urllib.parse.urlparse(url).netloc.lower()
+
+
+def should_require_manual(url):
+    d = domain(url)
+    if not d:
+        return False
+    if d.endswith(".gov") or d.endswith(".gov.cn"):
+        return True
+    return any(hint in d for hint in MANUAL_DOMAIN_HINTS)
+
+
+def robots_allows(url, timeout=8):
+    parsed = urllib.parse.urlparse(url)
+    if not parsed.scheme or not parsed.netloc:
+        return False
+    robots_url = "%s://%s/robots.txt" % (parsed.scheme, parsed.netloc)
+    parser = urllib.robotparser.RobotFileParser()
+    parser.set_url(robots_url)
+    try:
+        parser.read()
+    except Exception:
+        return True
+    return parser.can_fetch(USER_AGENT, url)
 
 
 def fetch_url(url, timeout):
@@ -107,8 +156,37 @@ def guess_source_type(url):
     return "web"
 
 
+def manual_required_record(record, seq, reason):
+    url = record.get("url", "")
+    return {
+        "source_id": "S%04d" % seq,
+        "status": "manual_required",
+        "reason": reason,
+        "url": url,
+        "source_domain": domain(url),
+        "query": record.get("query", ""),
+        "dimension_id": record.get("dimension_id", ""),
+        "dimension": record.get("dimension", ""),
+        "search_title": record.get("title", ""),
+        "search_snippet": record.get("snippet", ""),
+        "search_date": record.get("date", ""),
+        "source_type": guess_source_type(url),
+        "fetched_at": datetime.datetime.now(datetime.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "title": record.get("title", ""),
+        "published_date": record.get("date", ""),
+        "description": record.get("snippet", ""),
+        "text": "",
+        "text_length": 0,
+        "next_step": "请用浏览器人工读取该公开页面,再用 scripts/manual_source_note.py 记录标题、URL、摘录和采信边界。",
+    }
+
+
 def source_from_search_record(record, seq, timeout, max_chars):
     url = record.get("url", "")
+    if should_require_manual(url):
+        return manual_required_record(record, seq, "官方/监管/政府/交易所类来源不使用爬虫抓取")
+    if not robots_allows(url):
+        return manual_required_record(record, seq, "robots.txt 不允许自动抓取")
     base = {
         "source_id": "S%04d" % seq,
         "url": url,
@@ -120,7 +198,7 @@ def source_from_search_record(record, seq, timeout, max_chars):
         "search_snippet": record.get("snippet", ""),
         "search_date": record.get("date", ""),
         "source_type": guess_source_type(url),
-        "fetched_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+        "fetched_at": datetime.datetime.now(datetime.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
     }
     try:
         html_text, content_type = fetch_url(url, timeout)

@@ -167,15 +167,15 @@ def card_sentence(card):
     objects = join_values(card.get("objects", []))
     data = join_values(card.get("data", []))
     if time:
-        extras.append("时间口径为%s" % time)
+        extras.append("时间可落在%s" % time)
     if people:
-        extras.append("相关人物包括%s" % people)
+        extras.append("人物线索集中在%s" % people)
     if places:
-        extras.append("相关地点包括%s" % places)
+        extras.append("地点线索指向%s" % places)
     if objects:
-        extras.append("涉及对象包括%s" % objects)
+        extras.append("对象线索包括%s" % objects)
     if data:
-        extras.append("数据口径包括%s" % data)
+        extras.append("可引用的数据包括%s" % data)
     if extras:
         claim += " " + "；".join(extras) + "。"
     return claim
@@ -338,13 +338,17 @@ def detail_sentence(card, claim):
     for item in data:
         if item.startswith(("名称字段", "身份维度")):
             continue
+        if re.search(r"(资料|来源|证据|工具对象|分类依据|术语|场景|流程环节|组织或群体|补充证据|电商商品词)\d*[项组类]?$", item):
+            continue
+        if re.match(r"来源编号S\d+", item):
+            continue
         if "生卒" in item and normalize_year_range(item) and normalize_year_range(item) in claim:
             continue
         if "source" in item.lower() or "url" in item.lower():
             continue
         useful_data.append(item)
     if useful_data:
-        sentences.append("其中可直接引用的数据包括%s。" % "、".join(useful_data[:2]))
+        sentences.append("其中较适合直接进入正文的数据或口径包括%s。" % "、".join(useful_data[:2]))
     return "".join(sentences)
 
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-outline_from_evidence.py - 从 evidence_cards.jsonl 生成资料型 XMind Markdown 大纲。
+outline_from_evidence.py - 从 evidence_cards.jsonl 生成知识型 XMind Markdown 大纲。
 
-这个脚本用于把证据卡转成可见层级节点。它不生成报告段落,而是把每条
-事实拆成时间、地点、人物、对象、数据和来源等子节点,同时避免把证据卡
-字段名直接写进导图。
+这个脚本不再把证据卡机械展开成“事实1/时间地点/人物对象”的来源流水账。
+它先把每条证据转成可理解的知识点,再把时间、地点、人物、对象、数据和
+来源放到“关键细节”和“证据托底”中。这样 XMind 首先承担知识传播功能,
+证据负责校准和追溯。
 """
 import argparse
 import json
@@ -100,25 +101,62 @@ def ordered_cores(type_code, by_core):
     return out
 
 
+def knowledge_label(card, index):
+    terms = []
+    for field in ("objects", "people", "places"):
+        values = compact_values(card.get(field, []), limit=3)
+        for value in values:
+            if value not in terms:
+                terms.append(value)
+    if terms:
+        return "%s的资料说明" % "、".join(terms[:3])
+    claim = clean_text(card.get("claim", ""))
+    if claim:
+        return claim[:28].rstrip("，。；;:：") + "的资料说明"
+    return "资料说明%d" % index
+
+
+def add_optional_knowledge(lines, depth, card):
+    extra_fields = [
+        ("小白解释", "explanation"),
+        ("机制说明", "mechanism"),
+        ("边界说明", "boundary"),
+        ("常见误区", "misconception"),
+    ]
+    for label, field in extra_fields:
+        value = card.get(field)
+        if not value:
+            continue
+        add(lines, depth, label)
+        if isinstance(value, list):
+            for item in value:
+                add(lines, depth + 1, item)
+        else:
+            add(lines, depth + 1, value)
+    teaching_points = card.get("teaching_points")
+    if teaching_points:
+        add(lines, depth, "讲解要点")
+        for item in teaching_points if isinstance(teaching_points, list) else [teaching_points]:
+            add(lines, depth + 1, item)
+
+
 def add_card(lines, depth, card, index):
     claim = polished_claim(card)
-    add(lines, depth, "事实%d" % index)
-    add(lines, depth + 1, "基本事实")
+    add(lines, depth, knowledge_label(card, index))
+    add(lines, depth + 1, "知识解释")
     add(lines, depth + 2, claim)
+    add_optional_knowledge(lines, depth + 1, card)
 
-    add(lines, depth + 1, "时间地点")
+    add(lines, depth + 1, "关键细节")
     time = clean_text(card.get("time", ""))
     add(lines, depth + 2, "时间")
     add(lines, depth + 3, time or "未在证据卡中明确")
     add_values(lines, depth + 2, "地点", card.get("places", []))
-
-    add(lines, depth + 1, "人物对象")
     add_values(lines, depth + 2, "人物", card.get("people", []))
     add_values(lines, depth + 2, "对象", card.get("objects", []))
+    add_values(lines, depth + 2, "数据", card.get("data", []))
 
-    add_values(lines, depth + 1, "数据", card.get("data", []))
-
-    add(lines, depth + 1, "来源")
+    add(lines, depth + 1, "证据托底")
     add(lines, depth + 2, readable_source_title(card.get("source_title", "")))
     url = clean_text(card.get("source_url", ""))
     if url:

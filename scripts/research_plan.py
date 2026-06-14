@@ -158,12 +158,14 @@ PROFILE_CORES = {
 
 SOURCE_LADDERS = {
     "A": [
+        "百度百科/维基百科/百科概览用于建立名称、别名、分类和术语入口",
         "官网/新闻室/产品文档/投资者关系页",
         "交易所/监管文件/招股书/年报/法院/专利/招标",
         "主流财经媒体/行业协会/产业数据库/咨询报告",
         "近一年/近90天/近30天新闻与监管进展",
     ],
     "B": [
+        "百度百科/维基百科/百科概览用于建立人物、别名、时代和作品入口",
         "正史/地方志/年谱/文集/全集/别集/书信/奏议",
         "碑刻/谱牒/墓志/题跋/报刊/照片/影像/口述史",
         "博物馆/纪念馆/图书馆/档案馆公开馆藏",
@@ -171,12 +173,13 @@ SOURCE_LADDERS = {
         "当代保护/出版整理/数字化公开/纪念活动/研究动态",
     ],
     "C": [
-        "百科概览/入门手册/术语表/规则手册",
+        "百度百科/维基百科/百科概览/入门手册/术语表/规则手册",
         "协会/俱乐部/平台社区/赛事活动/代表人物资料",
         "工具产品资料/行业报告/消费平台数据/安全规范",
         "主流媒体/社交平台/短视频平台/近年传播动态",
     ],
     "D": [
+        "百度百科/维基百科/百科概览用于建立知识入口和术语地图",
         "官方/机构/学术/标准/数据库来源",
         "主流媒体/行业资料/专业社区/公开课程",
         "政策法规/统计数据/最新动态来源",
@@ -185,7 +188,7 @@ SOURCE_LADDERS = {
 
 
 BASE_QUERY_TEMPLATES = {
-    "topic_boundary": ["{topic} 是什么", "{topic} definition", "{topic} overview", "{topic} 术语 边界"],
+    "topic_boundary": ["{topic} 是什么", "{topic} 百度百科", "{topic} 维基百科", "{topic} definition", "{topic} overview", "{topic} 术语 边界"],
     "history_timeline": ["{topic} history timeline", "{topic} 发展历程", "{topic} 大事记", "{topic} 起源 分期"],
     "geography_space": ["{topic} 地理 分布", "{topic} location map", "{topic} 重要地点", "{topic} 空间 遗址"],
     "people_network": ["{topic} 代表人物 组织", "{topic} biography", "{topic} 人物 关系", "{topic} 研究者"],
@@ -202,7 +205,7 @@ BASE_QUERY_TEMPLATES = {
     "authority_sources": ["{topic} 论文 专著 文献", "{topic} research paper book", "{topic} 数据库 来源", "{topic} 权威资料"],
     "latest_status": ["{topic} {year} 最新", "{topic} latest current status", "{topic} 近况 动态", "{topic} news {year}"],
     "comparables": ["{topic} 同类 对比", "{topic} comparison alternatives", "{topic} 同类对象", "{topic} 竞品 替代"],
-    "source_index": ["{topic} source database", "{topic} 官方 数据库", "{topic} 文献目录", "{topic} 资料来源"],
+    "source_index": ["{topic} 百度百科 维基百科", "{topic} source database", "{topic} 官方 数据库", "{topic} 文献目录", "{topic} 资料来源"],
 }
 
 
@@ -406,9 +409,14 @@ def build_plan(topic, project_type, region, date=None):
         "generated_at": today,
         "research_contract": {
             "final_output": "xmind_only",
-            "evidence_first": True,
+            "knowledge_system_first": True,
+            "evidence_calibration": True,
+            "model_explanation_layer": True,
+            "evidence_first": False,
             "no_curation_suggestions": True,
             "no_placeholders_in_outline": True,
+            "manual_official_sources": True,
+            "encyclopedia_entry_sources": ["百度百科", "维基百科", "百科概览"],
             "notes_in_xmind": 0,
         },
         "theme_profile": {
