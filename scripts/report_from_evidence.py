@@ -310,11 +310,33 @@ def value_in_claim(value, claim):
     return value in claim
 
 
+def semantically_in_claim(value, claim):
+    value = clean_text(value)
+    claim = clean_text(claim)
+    if not value:
+        return True
+    if value in claim:
+        return True
+    parts = [p for p in re.split(r"[、,，/／;；\s]+", value) if p]
+    if parts and all(p in claim for p in parts):
+        return True
+    compact_value = re.sub(r"\W+", "", value)
+    compact_claim = re.sub(r"\W+", "", claim)
+    return bool(compact_value and compact_value in compact_claim)
+
+
 def normalize_year_range(text):
     m = re.search(r"(\d{3,4})\s*[-—]\s*(\d{3,4})", clean_text(text))
     if not m:
         return ""
     return "%s—%s" % (m.group(1), m.group(2))
+
+
+def normalize_date(text):
+    m = re.fullmatch(r"(\d{4})-(\d{1,2})-(\d{1,2})", clean_text(text))
+    if not m:
+        return ""
+    return "%s年%d月%d日" % (m.group(1), int(m.group(2)), int(m.group(3)))
 
 
 def inject_life_dates(card, claim):
@@ -331,25 +353,65 @@ def inject_life_dates(card, claim):
     return claim.replace("%s是" % person, "%s（%s），" % (person, years), 1)
 
 
+def is_metadata_data_item(item):
+    item = clean_text(item)
+    if not item:
+        return True
+    if item.startswith(("名称字段", "身份维度")):
+        return True
+    if re.search(r"(资料|来源|证据|工具对象|分类依据|术语|场景|流程环节|组织或群体|补充证据|电商商品词)\d*[项组类]?$", item):
+        return True
+    if re.match(r"来源编号S\d+", item):
+        return True
+    if "source" in item.lower() or "url" in item.lower():
+        return True
+    # These are internal cues for the researcher, not prose content for readers.
+    if re.search(r"(线索|口径|摘要|文章|论文|研究|资料|规划)$", item):
+        return True
+    if re.fullmatch(r"\d+处.+", item):
+        return True
+    if re.fullmatch(r"\d+篇", item):
+        return True
+    return False
+
+
+def concrete_data_sentence(item, claim):
+    item = clean_text(item)
+    if not item or semantically_in_claim(item, claim) or is_metadata_data_item(item):
+        return ""
+    date_text = normalize_date(item)
+    if date_text:
+        return ""
+    if re.search(r"〔\d{4}〕\d+号", item):
+        return "相关文件的文号为%s。" % item
+    if re.fullmatch(r"\d{2}-\d{4}/[A-Z]", item):
+        return "该刊国内统一连续出版物号为%s。" % item
+    return ""
+
+
+def supplement_sentences(card, claim):
+    out = []
+    for field in ("explanation", "mechanism", "boundary", "misconception"):
+        text = ensure_sentence(card.get(field, ""))
+        if not text or semantically_in_claim(text.rstrip("。！？.!?"), claim):
+            continue
+        out.append(text)
+        if len(out) >= 2:
+            break
+    if len(out) < 2:
+        for item in compact_values(card.get("data", []), 3):
+            if "生卒" in item and normalize_year_range(item) and normalize_year_range(item) in claim:
+                continue
+            sent = concrete_data_sentence(item, claim)
+            if sent and sent not in out:
+                out.append(sent)
+            if len(out) >= 2:
+                break
+    return out
+
+
 def detail_sentence(card, claim):
-    sentences = []
-    data = [v for v in compact_values(card.get("data", []), 2) if not value_in_claim(v, claim)]
-    useful_data = []
-    for item in data:
-        if item.startswith(("名称字段", "身份维度")):
-            continue
-        if re.search(r"(资料|来源|证据|工具对象|分类依据|术语|场景|流程环节|组织或群体|补充证据|电商商品词)\d*[项组类]?$", item):
-            continue
-        if re.match(r"来源编号S\d+", item):
-            continue
-        if "生卒" in item and normalize_year_range(item) and normalize_year_range(item) in claim:
-            continue
-        if "source" in item.lower() or "url" in item.lower():
-            continue
-        useful_data.append(item)
-    if useful_data:
-        sentences.append("其中较适合直接进入正文的数据或口径包括%s。" % "、".join(useful_data[:2]))
-    return "".join(sentences)
+    return "".join(supplement_sentences(card, claim))
 
 
 def polished_claim(card):

@@ -480,6 +480,8 @@ class PipelineToolsTest(unittest.TestCase):
             self.assertNotIn("资料综述", report_text)
             self.assertNotIn("时间口径为", report_text)
             self.assertNotIn("相关人物包括", report_text)
+            self.assertNotIn("较适合直接进入正文", report_text)
+            self.assertNotIn("数据或口径包括", report_text)
             self.assertNotIn("这些信息分别见于", report_text)
             self.assertIn("以上信息综合参考", report_text)
 
@@ -502,6 +504,79 @@ class PipelineToolsTest(unittest.TestCase):
                 self.assertIn("word/document.xml", z.namelist())
                 self.assertIn("word/styles.xml", z.namelist())
 
+    def test_report_turns_data_fields_into_content_not_data_mouth(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            plan = {
+                "topic": "钓鱼佬文化馆",
+                "project_type": {"code": "C"},
+                "theme_profile": {"required_cores": ["主题定义与边界", "历史源流与阶段变化"]},
+            }
+            cards = [
+                {
+                    "claim": "2024年农业农村部文件将休闲垂钓界定为以休闲娱乐为目的、不交易钓获物获利、不破坏水生生物资源和水域生态环境为前提的垂钓行为。",
+                    "core": "主题定义与边界",
+                    "dimension": "主题边界/基础定义",
+                    "time": "2024-12-31",
+                    "people": ["农业农村部办公厅"],
+                    "places": ["长江流域禁捕水域"],
+                    "objects": ["休闲垂钓", "钓获物", "水域生态"],
+                    "data": ["2024-12-31", "农办长渔〔2024〕5号"],
+                    "source_title": "农业农村部办公厅关于进一步加强长江流域禁捕水域垂钓管理工作的意见",
+                    "source_url": "https://example.com/policy",
+                    "source_type": "government",
+                    "confidence": "官方确认",
+                    "explanation": "这条政策把休闲垂钓与生产性捕捞、非法捕捞和经营性交易区分开。",
+                },
+                {
+                    "claim": "休闲垂钓协会文章称中国垂钓活动源远流长,新石器时代出土骨质鱼钩,郑州商代早期遗址中出现青铜制鱼钩。",
+                    "core": "历史源流与阶段变化",
+                    "dimension": "时间历史/发展阶段",
+                    "time": "新石器时代至商代早期",
+                    "people": ["钓鱼爱好者"],
+                    "places": ["郑州商代早期遗址"],
+                    "objects": ["骨质鱼钩", "青铜鱼钩"],
+                    "data": ["出土钓具线索"],
+                    "source_title": "休闲垂钓协会《中国传统钓鱼文化概述》",
+                    "source_url": "https://example.com/history",
+                    "source_type": "institution_or_database",
+                    "confidence": "机构资料",
+                    "explanation": "这类早期钓具资料说明垂钓首先是一种与生计和水域资源利用相关的技术活动。",
+                },
+            ]
+            plan_path = tmp_path / "plan.json"
+            evidence_path = tmp_path / "evidence.jsonl"
+            report_path = tmp_path / "report.md"
+            audit_path = tmp_path / "report_audit.json"
+            plan_path.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+            evidence_path.write_text("\n".join(json.dumps(c, ensure_ascii=False) for c in cards) + "\n", encoding="utf-8")
+
+            res = self.run_script(
+                "report_from_evidence.py",
+                "--plan", str(plan_path),
+                "--evidence", str(evidence_path),
+                "--out", str(report_path),
+                "--type", "C",
+                "--cards-per-paragraph", "2",
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            report_text = report_path.read_text(encoding="utf-8")
+            self.assertNotIn("较适合直接进入正文", report_text)
+            self.assertNotIn("数据或口径包括", report_text)
+            self.assertNotIn("出土钓具线索", report_text)
+            self.assertIn("这条政策把休闲垂钓与生产性捕捞、非法捕捞和经营性交易区分开。", report_text)
+            self.assertIn("相关文件的文号为农办长渔〔2024〕5号。", report_text)
+
+            res = self.run_script(
+                "report_audit.py",
+                str(report_path),
+                "--min-chars", "500",
+                "--min-headings", "4",
+                "--min-paragraphs", "4",
+                "--json", str(audit_path),
+            )
+            self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+
     def test_report_audit_rejects_short_list_and_method_labels(self):
         bad_report = """# 测试报告
 
@@ -518,6 +593,8 @@ class PipelineToolsTest(unittest.TestCase):
 来源类型为 government。
 
 时间口径为2026年。
+
+其中较适合直接进入正文的数据或口径包括2024-12-31、农办长渔〔2024〕5号。
 """
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.md"
