@@ -383,7 +383,7 @@ def concrete_data_sentence(item, claim):
     if date_text:
         return ""
     if re.search(r"〔\d{4}〕\d+号", item):
-        return "相关文件的文号为%s。" % item
+        return "该文件以%s发布。" % item
     if re.fullmatch(r"\d{2}-\d{4}/[A-Z]", item):
         return "该刊国内统一连续出版物号为%s。" % item
     return ""

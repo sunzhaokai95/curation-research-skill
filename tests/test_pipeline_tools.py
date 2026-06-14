@@ -565,7 +565,7 @@ class PipelineToolsTest(unittest.TestCase):
             self.assertNotIn("数据或口径包括", report_text)
             self.assertNotIn("出土钓具线索", report_text)
             self.assertIn("这条政策把休闲垂钓与生产性捕捞、非法捕捞和经营性交易区分开。", report_text)
-            self.assertIn("相关文件的文号为农办长渔〔2024〕5号。", report_text)
+            self.assertIn("该文件以农办长渔〔2024〕5号发布。", report_text)
 
             res = self.run_script(
                 "report_audit.py",
