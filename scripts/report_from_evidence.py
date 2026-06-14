@@ -69,25 +69,47 @@ CORE_TITLE_HINTS = {
 }
 
 CORE_SUBHEADING_HINTS = {
-    "主体身份与名称体系": "名称、登记与主体边界",
-    "创始人/领导层/组织结构": "人物、股权与治理线索",
-    "产品业务谱系": "产品线、业务入口与能力边界",
-    "技术能力与生产系统": "技术能力、设施与运行数据",
-    "市场客户与产业链": "客户场景、合同与产业链关系",
-    "财经资本/上市IPO/融资/估值/收入": "资本事件、估值与收入口径",
-    "监管诉讼/合规/风险": "监管事项、诉讼与风险口径",
-    "最新动态/近一年/近90天": "近期事件、时间节点与状态变化",
-    "同类企业事实对照": "同类对象与事实差异",
-    "主题边界与名称体系": "名称、身份与主题边界",
-    "生平年谱": "年谱节点、转折事件与阶段线索",
-    "家族师友与关系网络": "人物关系、家族与师友网络",
-    "时代制度背景": "制度背景、政局与社会环境",
-    "地理行旅与空间遗存": "行旅地点、任职地与遗存线索",
+    "主体身份与名称体系": "法人登记与主体边界",
+    "创始人/领导层/组织结构": "管理层、股权与治理关系",
+    "产品业务谱系": "产品谱系与业务边界",
+    "技术能力与生产系统": "技术能力与运行数据",
+    "市场客户与产业链": "客户场景与产业链关系",
+    "财经资本/上市IPO/融资/估值/收入": "资本事件、估值与收入",
+    "监管诉讼/合规/风险": "监管事项与风险记录",
+    "最新动态/近一年/近90天": "近期事件与状态变化",
+    "同类企业事实对照": "同类对象事实对照",
+    "主题边界与名称体系": "姓名、身份与主题界定",
+    "生平年谱": "生平节点与人生阶段",
+    "家族师友与关系网络": "家族、师友与人物关系",
+    "时代制度背景": "时代制度与政治环境",
+    "地理行旅与空间遗存": "行旅地点与空间遗存",
     "作品文献/版本/注本": "作品、版本与文本来源",
     "实物馆藏/碑刻/图像档案": "实物、馆藏与图像档案",
-    "思想风格与术语体系": "思想术语、风格与观念线索",
-    "后世接受/传播/研究史": "后世评价、传播与研究脉络",
-    "当代保护/出版/数字化/纪念活动": "保护出版、数字化与公共传播",
+    "思想风格与术语体系": "思想术语与风格特征",
+    "后世接受/传播/研究史": "后世评价与传播研究",
+    "当代保护/出版/数字化/纪念活动": "保护、出版与数字化",
+}
+
+CORE_GROUP_HEADINGS = {
+    "主体身份与名称体系": ["法人登记与总部信息", "企业使命与公开识别"],
+    "创始人/领导层/组织结构": ["管理层与 IPO 文件信息", "股权结构与承销网络"],
+    "产品业务谱系": ["主要产品线与业务入口", "航天器、卫星网络与政府业务"],
+    "技术能力与生产系统": ["可重复使用能力与发射数据", "运力参数与许可审查"],
+    "市场客户与产业链": ["政府客户与载人航天合同", "商业客户、卫星服务与移动连接"],
+    "财经资本/上市IPO/融资/估值/收入": ["IPO 状态与证券识别", "收入、估值与发行规模", "股本结构与锁定安排"],
+    "监管诉讼/合规/风险": ["发射许可与事故调查", "政府合同与安全义务", "环境诉讼与监管争议", "劳工安全与合规风险"],
+    "最新动态/近一年/近90天": ["近期任务与公开事件", "交易动态与发射记录"],
+    "同类企业事实对照": ["美国商业航天企业对照", "欧洲与中小型发射企业对照"],
+    "主题边界与名称体系": ["姓名、身份与主题界定", "三苏关系与后世称谓"],
+    "生平年谱": ["早年教育与科举入仕", "外任经历与地方治理", "乌台诗案与黄州转折", "晚年贬谪与北归"],
+    "家族师友与关系网络": ["三苏家族与早年教育", "婚姻家庭与晚年陪伴", "师友赏识与现代研究者"],
+    "时代制度背景": ["北宋政局与变法背景", "监察制度与乌台诗案", "党争、制科与士人处境"],
+    "地理行旅与空间遗存": ["眉山故里与早年空间", "杭州、密州与作品发生地", "黄州、惠州与贬谪空间", "海南遗存与纪念空间", "当代纪念地与地方传播"],
+    "作品文献/版本/注本": ["文集整理与年谱系统", "赤壁作品与经典篇章", "书法名迹与版本流传", "教材选篇与公共阅读"],
+    "实物馆藏/碑刻/图像档案": ["主题书画与馆藏展品", "文物等级与馆藏规模", "碑刻、御碑与图像线索"],
+    "思想风格与术语体系": ["文章风格与书法谱系", "民本意识与处世态度", "人格风范与生活趣味"],
+    "后世接受/传播/研究史": ["专题展览与行旅叙事", "大众传播与公共文化", "纪念活动与学术研究"],
+    "当代保护/出版/数字化/纪念活动": ["机构建设与保护工程", "展厅库房与数据库建设", "邮票、出版与寿苏会"],
 }
 
 INTRO_BY_TYPE = {
@@ -159,8 +181,44 @@ def card_sentence(card):
     return claim
 
 
+def compact_values(values, limit=3):
+    if isinstance(values, list):
+        vals = [clean_text(v) for v in values if clean_text(v)]
+    elif values:
+        vals = [clean_text(values)]
+    else:
+        vals = []
+    out = []
+    seen = set()
+    for val in vals:
+        if val in seen:
+            continue
+        seen.add(val)
+        out.append(val)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def readable_source_title(title):
+    title = clean_text(title)
+    if " - 维基百科，自由的百科全书" in title:
+        base = title.replace(" - 维基百科，自由的百科全书", "").strip()
+        return "维基百科“%s”词条" % base
+    if " - 维基文库，自由的图书馆" in title:
+        base = title.replace(" - 维基文库，自由的图书馆", "").strip()
+        base = base.replace("/", "·")
+        return "维基文库《%s》" % base
+    if title.endswith(" - 新华网客户端"):
+        base = title.replace(" - 新华网客户端", "").strip()
+        base = base.replace("《", "〈").replace("》", "〉")
+        return "新华网客户端《%s》" % base
+    title = title.replace("_四川在线", "")
+    return title or "未命名来源"
+
+
 def source_phrase(card):
-    title = clean_text(card.get("source_title", "未命名来源"))
+    title = readable_source_title(card.get("source_title", "未命名来源"))
     confidence = clean_text(card.get("confidence", ""))
     if confidence:
         return "%s（%s）" % (title, confidence)
@@ -211,6 +269,9 @@ def time_values(cards, limit=2):
 
 
 def group_heading(num, pidx, core, cards):
+    templates = CORE_GROUP_HEADINGS.get(core, [])
+    if pidx <= len(templates):
+        return "%s.%d %s" % (num, pidx, templates[pidx - 1])
     base = CORE_SUBHEADING_HINTS.get(core, CORE_TITLE_HINTS.get(core, core))
     terms = []
     for field in ("objects", "people", "places", "data"):
@@ -236,18 +297,83 @@ def chapter_intro(topic, core, cards, type_code):
     source_text = "、".join(sources) if sources else "已归档来源"
     dim_text = "、".join(dims) if dims else "基础资料维度"
     if type_code == "A":
-        return "本章处理%s的%s问题。资料主要来自%s,覆盖%s等维度。阅读时应把公司自述、监管文件、媒体报道和分析估算区分开,避免把不同口径合并为一句结论。" % (topic, title, source_text, dim_text)
+        return "本章梳理%s的%s。资料主要来自%s,覆盖%s等维度。公司自述、监管文件、媒体报道和分析估算承担的作用不同,阅读时需要分开看。" % (topic, title, source_text, dim_text)
     if type_code == "B":
-        return "本章处理%s的%s问题。资料主要来自%s,覆盖%s等维度。阅读时应把正史、年谱、文集、地方资料、数据库和当代传播资料分层看待,既保留事实,也保留来源差异。" % (topic, title, source_text, dim_text)
-    return "本章处理%s的%s问题。资料主要来自%s,覆盖%s等维度。阅读时应先把主题本体讲清,再进入对象、机制、场景、数据和争议。" % (topic, title, source_text, dim_text)
+        return "本章梳理%s的%s。资料主要来自%s,覆盖%s等维度。正史、年谱、文集、地方资料、数据库和当代传播材料各有侧重,这里尽量保留事实本身,也保留来源之间的差异。" % (topic, title, source_text, dim_text)
+    return "本章梳理%s的%s。资料主要来自%s,覆盖%s等维度。阅读顺序是先界定主题本体,再进入对象、机制、场景、数据和争议。" % (topic, title, source_text, dim_text)
+
+
+def value_in_claim(value, claim):
+    value = clean_text(value)
+    if not value:
+        return True
+    return value in claim
+
+
+def normalize_year_range(text):
+    m = re.search(r"(\d{3,4})\s*[-—]\s*(\d{3,4})", clean_text(text))
+    if not m:
+        return ""
+    return "%s—%s" % (m.group(1), m.group(2))
+
+
+def inject_life_dates(card, claim):
+    people = compact_values(card.get("people", []), 1)
+    if not people:
+        return claim
+    person = people[0]
+    data_text = " ".join(compact_values(card.get("data", []), 4))
+    if "生卒" not in data_text:
+        return claim
+    years = normalize_year_range(data_text)
+    if not years or years in claim:
+        return claim
+    return claim.replace("%s是" % person, "%s（%s），" % (person, years), 1)
+
+
+def detail_sentence(card, claim):
+    sentences = []
+    data = [v for v in compact_values(card.get("data", []), 2) if not value_in_claim(v, claim)]
+    useful_data = []
+    for item in data:
+        if item.startswith(("名称字段", "身份维度")):
+            continue
+        if "生卒" in item and normalize_year_range(item) and normalize_year_range(item) in claim:
+            continue
+        if "source" in item.lower() or "url" in item.lower():
+            continue
+        useful_data.append(item)
+    if useful_data:
+        sentences.append("其中可直接引用的数据包括%s。" % "、".join(useful_data[:2]))
+    return "".join(sentences)
+
+
+def polished_claim(card):
+    claim = ensure_sentence(card.get("claim", ""))
+    claim = re.sub(r"字([^，。]+)，又字([^，。]+)", r"字\1、\2", claim)
+    claim = inject_life_dates(card, claim)
+    claim = claim.replace("不能只归为", "并非单纯是")
+    claim = claim.replace("共同构成资料主体", "均应纳入资料梳理范围")
+    claim = claim.replace("他同时是", "更是")
+    claim = claim.replace("均应纳入资料梳理范围", "均为资料梳理的核心内容")
+    claim = claim.replace("这组数字直接体现", "这组数字说明")
+    claim = claim.replace("这是", "这也是")
+    return claim
 
 
 def paragraph_from_cards(cards):
-    sentences = [card_sentence(c) for c in cards]
-    sources = sorted({source_phrase(c) for c in cards})
-    paragraph = "".join(sentences)
+    paragraphs = []
+    for card in cards:
+        claim = polished_claim(card)
+        detail = detail_sentence(card, claim)
+        if detail:
+            paragraphs.append(claim + "\n" + detail)
+        else:
+            paragraphs.append(claim)
+    sources = sorted({readable_source_title(c.get("source_title", "")) for c in cards if c.get("source_title")})
+    paragraph = "\n".join(paragraphs)
     if sources:
-        paragraph += "这些信息分别见于%s。" % "、".join(sources[:5])
+        paragraph += "\n以上信息综合参考:%s。" % "、".join(sources[:5])
     return paragraph
 
 
@@ -301,7 +427,7 @@ def report(plan, cards, args):
     all_sources = len({c.get("source_url", "") for c in cards if c.get("source_url")})
     all_cards = len(cards)
     cores_text = "、".join(CORE_TITLE_HINTS.get(c, c) for c in ordered_cores[:8])
-    lines.append("%s的前期资料不宜只停留在一句定义或少量关键词上。现有资料共形成%d条证据卡,关联%d个来源,覆盖%s等核心方向。这些资料共同构成后续策展大纲的事实底座:一方面说明主题是什么、从哪里来、由哪些对象组成;另一方面说明资料中有哪些时间、地点、人物、数据、政策、争议和来源口径。" % (topic, all_cards, all_sources, cores_text))
+    lines.append("%s的资料整理不能停在一句定义或几组关键词上。本次归档形成%d条证据卡,关联%d个来源,覆盖%s等方向。报告正文按资料问题展开:先说明主题是什么、从哪里来、由哪些对象组成,再整理时间、地点、人物、数据、政策、争议和来源口径。" % (topic, all_cards, all_sources, cores_text))
     lines.append("")
 
     for idx, core in enumerate(ordered_cores, 2):

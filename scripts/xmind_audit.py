@@ -17,6 +17,7 @@ if SCRIPT_DIR not in sys.path:
 
 from outline_audit import (  # noqa: E402
     CURATION_PATTERNS,
+    FIELD_PROSE_PATTERNS,
     METHOD_LABEL_PATTERNS,
     PLACEHOLDER_PATTERNS,
     STRUCTURE_SHORT_TITLES,
@@ -84,6 +85,7 @@ def audit(path, args):
     notes_count = sum(1 for r in rows if r.get("notes"))
     placeholder = pattern_hits(rows, PLACEHOLDER_PATTERNS)
     method_labels = pattern_hits(rows, METHOD_LABEL_PATTERNS)
+    field_prose = pattern_hits(rows, FIELD_PROSE_PATTERNS)
     curation = pattern_hits(rows, CURATION_PATTERNS)
     short_samples = short_leaf_hits(rows)[:20]
     max_depth = max(r["depth"] for r in rows)
@@ -97,6 +99,7 @@ def audit(path, args):
         "topics_with_notes": notes_count,
         "placeholder_hits": placeholder,
         "method_label_hits": method_labels,
+        "field_prose_hits": field_prose,
         "curation_hits": curation,
         "short_leaf_samples": short_samples,
         "errors": [],
@@ -117,6 +120,8 @@ def audit(path, args):
         report["errors"].append("发现占位句: %d 条" % len(placeholder))
     if method_labels:
         report["errors"].append("发现方法标签伪内容: %d 条" % len(method_labels))
+    if field_prose:
+        report["errors"].append("发现字段腔节点: %d 条" % len(field_prose))
     if curation:
         report["errors"].append("发现策展污染词: %d 条" % len(curation))
     if short_samples and not args.warn_short_leaves:
@@ -135,12 +140,13 @@ def print_report(report):
     print("备注节点: %d" % report["topics_with_notes"])
     print("占位句: %d" % len(report["placeholder_hits"]))
     print("方法标签: %d" % len(report["method_label_hits"]))
+    print("字段腔: %d" % len(report["field_prose_hits"]))
     print("策展污染: %d" % len(report["curation_hits"]))
     for err in report["errors"]:
         print("ERROR: " + err)
     for warn in report["warnings"]:
         print("WARN: " + warn)
-    for key in ("placeholder_hits", "method_label_hits", "curation_hits", "short_leaf_samples"):
+    for key in ("placeholder_hits", "method_label_hits", "field_prose_hits", "curation_hits", "short_leaf_samples"):
         for item in report[key][:5]:
             print("样例[%s]: %s" % (key, json.dumps(item, ensure_ascii=False)))
 

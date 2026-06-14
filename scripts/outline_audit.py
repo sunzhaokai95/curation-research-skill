@@ -55,6 +55,16 @@ METHOD_LABEL_PATTERNS = [
     r"对应证据卡",
 ]
 
+FIELD_PROSE_PATTERNS = [
+    r"时间口径为",
+    r"相关人物包括",
+    r"相关地点包括",
+    r"涉及对象包括",
+    r"数据口径包括",
+    r"这些信息分别见于",
+    r"本章处理.+问题",
+]
+
 
 CURATION_PATTERNS = [
     r"展项",
@@ -80,6 +90,9 @@ STRUCTURE_SHORT_TITLES = {
     "定义", "来源", "链接", "时间", "地点", "人物", "机构", "数据",
     "经过", "结果", "争议", "作用", "用途", "分类", "特征", "背景",
     "版本", "出处", "现状", "边界", "误区", "对象", "材料", "工具",
+    "资料性质", "采信边界", "来源用途", "时间地点", "人物对象",
+    "主题名称", "资料主体", "别名与检索名称", "项目类型", "地域范围",
+    "资料规模", "权威来源路线", "最新资料要求", "支撑内容",
 }
 
 
@@ -228,6 +241,7 @@ def audit(path, args):
         "inline_compression": inline_compression_hits(text),
         "placeholder_hits": line_hits(text, PLACEHOLDER_PATTERNS),
         "method_label_hits": line_hits(text, METHOD_LABEL_PATTERNS),
+        "field_prose_hits": line_hits(text, FIELD_PROSE_PATTERNS),
         "curation_hits": line_hits(text, CURATION_PATTERNS),
         "short_leaf_samples": short_leaf_hits(rows)[:20],
         "missing_required_terms": [],
@@ -250,6 +264,8 @@ def audit(path, args):
         report["errors"].append("发现占位句/任务句: %d 条;不能把检查要求写进导图" % len(report["placeholder_hits"]))
     if report["method_label_hits"]:
         report["errors"].append("发现方法标签伪内容: %d 条;导图节点必须写具体事实,不能写模板提示或下钻方式" % len(report["method_label_hits"]))
+    if report["field_prose_hits"]:
+        report["errors"].append("发现字段腔节点: %d 条;导图节点应写自然中文,不能直接拼接证据卡字段" % len(report["field_prose_hits"]))
     if report["curation_hits"]:
         report["errors"].append("发现策展污染词: %d 条;调研阶段只保留资料事实" % len(report["curation_hits"]))
     if report["short_leaf_samples"] and not args.warn_short_leaves:
@@ -284,6 +300,7 @@ def print_report(report):
     print("压缩写法: %d" % len(report["inline_compression"]))
     print("占位句: %d" % len(report["placeholder_hits"]))
     print("方法标签: %d" % len(report["method_label_hits"]))
+    print("字段腔: %d" % len(report["field_prose_hits"]))
     print("策展污染: %d" % len(report["curation_hits"]))
     if report["missing_required_terms"]:
         print("缺少核心词: %s" % "、".join(report["missing_required_terms"][:20]))
@@ -291,7 +308,7 @@ def print_report(report):
         print("ERROR: " + item)
     for item in report["warnings"]:
         print("WARN: " + item)
-    for key in ("placeholder_hits", "method_label_hits", "notes", "inline_compression", "curation_hits", "short_leaf_samples"):
+    for key in ("placeholder_hits", "method_label_hits", "field_prose_hits", "notes", "inline_compression", "curation_hits", "short_leaf_samples"):
         samples = report[key][:5]
         if samples:
             print("样例[%s]:" % key)

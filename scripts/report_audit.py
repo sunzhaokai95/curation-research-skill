@@ -40,6 +40,16 @@ GENERIC_HEADING_PATTERNS = [
     r"基本情况$",
 ]
 
+FIELD_PROSE_PATTERNS = [
+    r"时间口径为",
+    r"相关人物包括",
+    r"相关地点包括",
+    r"涉及对象包括",
+    r"数据口径包括",
+    r"这些信息分别见于",
+    r"本章处理.+问题",
+]
+
 
 def line_hits(text, patterns):
     hits = []
@@ -87,6 +97,7 @@ def audit(path, args):
         "method_label_hits": line_hits(text, METHOD_LABEL_PATTERNS),
         "curation_hits": line_hits(text, CURATION_PATTERNS),
         "generic_heading_hits": generic_heading_hits(heads),
+        "field_prose_hits": line_hits(text, FIELD_PROSE_PATTERNS),
         "errors": [],
         "warnings": [],
     }
@@ -108,6 +119,9 @@ def audit(path, args):
     if report["generic_heading_hits"]:
         report["errors"].append("发现泛化小标题: %d 条;小标题应来自具体对象、人物、时间或问题" % (
             len(report["generic_heading_hits"])))
+    if report["field_prose_hits"]:
+        report["errors"].append("发现字段腔报告句: %d 条;报告应改写成自然段落" % (
+            len(report["field_prose_hits"])))
     return report
 
 
@@ -121,9 +135,10 @@ def print_report(report):
     print("方法标签: %d" % len(report["method_label_hits"]))
     print("策展污染: %d" % len(report["curation_hits"]))
     print("泛化小标题: %d" % len(report.get("generic_heading_hits", [])))
+    print("字段腔: %d" % len(report.get("field_prose_hits", [])))
     for err in report["errors"]:
         print("ERROR: " + err)
-    for key in ("placeholder_hits", "method_label_hits", "curation_hits", "generic_heading_hits", "short_paragraph_samples"):
+    for key in ("placeholder_hits", "method_label_hits", "curation_hits", "generic_heading_hits", "field_prose_hits", "short_paragraph_samples"):
         for item in report.get(key, [])[:5]:
             print("样例[%s]: %s" % (key, json.dumps(item, ensure_ascii=False)))
 

@@ -59,6 +59,7 @@ class PipelineToolsTest(unittest.TestCase):
   - 硬体饵  > 硬质材料制成。
   - 继续下钻方向
     - 关联资料面
+  - 时间口径为1037年
 """
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.md"
@@ -70,6 +71,97 @@ class PipelineToolsTest(unittest.TestCase):
             self.assertIn("备注", combined)
             self.assertIn("压缩", combined)
             self.assertIn("方法标签", combined)
+            self.assertIn("字段腔", combined)
+
+    def test_outline_from_evidence_generates_natural_xmind_outline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            plan = {
+                "topic": "苏东坡文化馆",
+                "region": "中国",
+                "project_type": {"code": "B", "label": "博物馆/文化馆/历史文化"},
+                "theme_profile": {
+                    "content_subject": "苏东坡",
+                    "subject_aliases": ["苏轼", "苏东坡"],
+                    "required_cores": ["主题边界与名称体系", "生平年谱"],
+                    "source_ladder": ["正史/年谱/文集", "博物馆公开馆藏"],
+                    "freshness_rule": "查最新出版、保护和数字化资料",
+                },
+            }
+            cards = [
+                {
+                    "claim": "苏轼是北宋眉州眉山人，名轼，字子瞻，又字和仲，号东坡居士。",
+                    "core": "主题边界与名称体系",
+                    "dimension": "主题边界/基础定义",
+                    "time": "1037-1101年",
+                    "people": ["苏轼"],
+                    "places": ["眉州眉山"],
+                    "objects": ["姓名", "字", "号"],
+                    "data": ["生卒年1037-1101"],
+                    "source_title": "苏轼 - 维基百科，自由的百科全书",
+                    "source_url": "https://example.com/sushi",
+                    "source_type": "web",
+                    "confidence": "单一来源",
+                },
+                {
+                    "claim": "嘉祐二年苏轼参加礼部考试，欧阳修读《刑赏忠厚论》后对其文章大为赞赏。",
+                    "core": "生平年谱",
+                    "dimension": "时间历史/发展阶段",
+                    "time": "1057年",
+                    "people": ["苏轼", "欧阳修"],
+                    "places": ["开封"],
+                    "objects": ["礼部考试", "刑赏忠厚论"],
+                    "data": ["嘉祐二年"],
+                    "source_title": "宋史/卷338 - 维基文库，自由的图书馆",
+                    "source_url": "https://example.com/songshi",
+                    "source_type": "academic",
+                    "confidence": "学术资料",
+                },
+            ]
+            plan_path = tmp_path / "plan.json"
+            evidence_path = tmp_path / "evidence.jsonl"
+            outline_path = tmp_path / "outline.md"
+            xmind_path = tmp_path / "outline.xmind"
+            plan_path.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+            evidence_path.write_text("\n".join(json.dumps(c, ensure_ascii=False) for c in cards) + "\n", encoding="utf-8")
+
+            res = self.run_script(
+                "outline_from_evidence.py",
+                "--plan", str(plan_path),
+                "--evidence", str(evidence_path),
+                "--out", str(outline_path),
+                "--type", "B",
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            text = outline_path.read_text(encoding="utf-8")
+            self.assertIn("主题解读", text)
+            self.assertIn("姓名、身份与主题界定", text)
+            self.assertIn("资料性质:公开网页资料", text)
+            self.assertNotIn("时间口径为", text)
+            self.assertNotIn("来源类型为", text)
+
+            res = self.run_script(
+                "outline_audit.py",
+                str(outline_path),
+                "--type", "B",
+                "--plan", str(plan_path),
+                "--min-nodes", "20",
+                "--min-depth", "7",
+                "--warn-short-leaves",
+                "--skip-required-terms",
+            )
+            self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+
+            res = self.run_script("md_to_xmind.py", str(outline_path), "-o", str(xmind_path))
+            self.assertEqual(res.returncode, 0, res.stderr)
+            res = self.run_script(
+                "xmind_audit.py",
+                str(xmind_path),
+                "--min-nodes", "20",
+                "--min-depth", "7",
+                "--warn-short-leaves",
+            )
+            self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
 
     def test_evidence_validation_rejects_placeholders_and_thin_cards(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -217,6 +309,10 @@ class PipelineToolsTest(unittest.TestCase):
             report_text = report_path.read_text(encoding="utf-8")
             self.assertIn("资料调研报告", report_text)
             self.assertNotIn("资料综述", report_text)
+            self.assertNotIn("时间口径为", report_text)
+            self.assertNotIn("相关人物包括", report_text)
+            self.assertNotIn("这些信息分别见于", report_text)
+            self.assertIn("以上信息综合参考", report_text)
 
             res = self.run_script(
                 "report_audit.py",
@@ -251,6 +347,8 @@ class PipelineToolsTest(unittest.TestCase):
 ## 二、来源
 
 来源类型为 government。
+
+时间口径为2026年。
 """
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.md"
@@ -268,6 +366,7 @@ class PipelineToolsTest(unittest.TestCase):
             self.assertIn("方法标签", combined)
             self.assertIn("短段落", combined)
             self.assertIn("泛化小标题", combined)
+            self.assertIn("字段腔", combined)
 
 
 if __name__ == "__main__":
